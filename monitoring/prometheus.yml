@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: dbprovision
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+
+  - job_name: dbprovision-api
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+    metrics_path: /metrics
+
+  - job_name: postgres-tenants
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    relabel_configs:
+      - target_label: instance
+        replacement: acme-corp-dev
+
+  - job_name: postgres-mgmt
+    static_configs:
+      - targets: ['postgres-exporter-mgmt:9187']
+    relabel_configs:
+      - target_label: instance
+        replacement: management-db
+
+  - job_name: redis
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  - job_name: celery
+    static_configs:
+      - targets: ['flower:5555']
+    metrics_path: /metrics

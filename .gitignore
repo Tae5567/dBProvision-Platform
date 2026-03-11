@@ -1,0 +1,13 @@
+.env
+
+node_modules/
+
+__pycache__/
+
+.venv/
+
+README.md
+
+.terraform/
+
+bootstrap/

@@ -1,0 +1,126 @@
+{
+  "description": "Track bulk migration jobs — success rate, duration, failures per tenant",
+  "panels": [
+
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Migrations Run Today",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [{
+        "expr": "increase(dbprovision_migrations_total[24h])",
+        "refId": "A"
+      }],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" },
+          "thresholds": { "steps": [{ "color": "blue", "value": null }] }
+        }
+      }
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Migration Failure Rate",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [{
+        "expr": "rate(dbprovision_migrations_failed_total[1h]) / rate(dbprovision_migrations_total[1h])",
+        "refId": "A"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        }
+      }
+    },
+
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Migration Duration (p50 / p95 / p99)",
+      "description": "If p99 is very high, one tenant is consistently slow — investigate that DB.",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(dbprovision_migration_duration_seconds_bucket[5m]))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(dbprovision_migration_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(dbprovision_migration_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Provisioning Queue Depth",
+      "description": "How many jobs are waiting vs being processed. Spikes = workers struggling.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [{
+        "expr": "celery_tasks_received_total - celery_tasks_succeeded_total - celery_tasks_failed_total",
+        "legendFormat": "Queued tasks",
+        "refId": "A"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "fillOpacity": 20 },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 20 },
+              { "color": "red", "value": 50 }
+            ]
+          }
+        }
+      }
+    },
+
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Active Celery Workers",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [{
+        "expr": "celery_workers_online",
+        "legendFormat": "Online workers",
+        "refId": "A"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 1 },
+              { "color": "green", "value": 3 }
+            ]
+          }
+        }
+      }
+    }
+
+  ],
+  "refresh": "15s",
+  "schemaVersion": 38,
+  "tags": ["dbprovision", "migrations"],
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "Migration Runs",
+  "uid": "dbprovision-migrations",
+  "version": 1
+}

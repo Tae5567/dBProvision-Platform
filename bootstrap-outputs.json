@@ -1,0 +1,65 @@
+{
+  "app_security_group_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "sg-00168a457b123079b"
+  },
+  "backups_bucket": {
+    "sensitive": false,
+    "type": "string",
+    "value": "dbprovision-backups-587764055032"
+  },
+  "db_subnet_group_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "dbprovision-subnet-group"
+  },
+  "dynamodb_lock_table": {
+    "sensitive": false,
+    "type": "string",
+    "value": "dbprovision-tf-locks"
+  },
+  "private_subnet_ids": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string",
+        "string"
+      ]
+    ],
+    "value": [
+      "subnet-019bf4247ac773263",
+      "subnet-0e5c2706619277533"
+    ]
+  },
+  "public_subnet_ids": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string",
+        "string"
+      ]
+    ],
+    "value": [
+      "subnet-0eab9b17221e91bc8",
+      "subnet-074b919db92f0917f"
+    ]
+  },
+  "rds_security_group_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "sg-00161b1d4c660b02c"
+  },
+  "tf_state_bucket": {
+    "sensitive": false,
+    "type": "string",
+    "value": "dbprovision-tf-state-587764055032"
+  },
+  "vpc_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "vpc-02ea095fc1777867d"
+  }
+}

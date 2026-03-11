@@ -1,0 +1,146 @@
+groups:
+  # ── Database connection alerts ───────────────────────────────────────────
+  - name: database_connections
+    rules:
+
+      # Fires when any tenant is using >80% of their max connections.
+      # At 100% new connections are refused — application errors start immediately.
+      - alert: HighConnectionCount
+        expr: |
+          (pg_stat_database_numbackends / pg_settings_max_connections) > 0.80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High connection count on {{ $labels.instance }}"
+          description: >
+            {{ $labels.instance }} is using
+            {{ $value | humanizePercentage }} of max connections.
+            Consider enabling PgBouncer connection pooling.
+
+      - alert: CriticalConnectionCount
+        expr: |
+          (pg_stat_database_numbackends / pg_settings_max_connections) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: Connection exhaustion imminent on {{ $labels.instance }}"
+          description: >
+            {{ $labels.instance }} at {{ $value | humanizePercentage }} connections.
+            New connections will be refused immediately if this continues.
+
+  # ── Cache hit ratio ──────────────────────────────────────────────────────
+  - name: cache_performance
+    rules:
+
+      # Below 95% means PostgreSQL is hitting disk for queries —
+      # performance degrades significantly. Usually means you need more RAM.
+      - alert: LowCacheHitRatio
+        expr: |
+          (
+            sum by (instance) (pg_stat_database_blks_hit)
+            /
+            (sum by (instance) (pg_stat_database_blks_hit) + sum by (instance) (pg_stat_database_blks_read))
+          ) < 0.95
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit ratio on {{ $labels.instance }}"
+          description: >
+            Cache hit ratio is {{ $value | humanizePercentage }}.
+            Acceptable threshold is 95%+. Consider increasing shared_buffers
+            or upgrading to a larger instance class.
+
+  # ── Replication lag ──────────────────────────────────────────────────────
+  - name: replication
+    rules:
+
+      # If the standby (Multi-AZ) falls behind by >30s, failover takes longer
+      # and there's risk of data loss in a crash scenario.
+      - alert: ReplicationLagHigh
+        expr: pg_replication_lag > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Replication lag on {{ $labels.instance }}"
+          description: >
+            Replication is {{ $value }}s behind on {{ $labels.instance }}.
+            Check for long-running transactions blocking WAL application.
+
+  # ── Disk usage ───────────────────────────────────────────────────────────
+  - name: disk_usage
+    rules:
+
+      # RDS auto-storage doesn't kick in instantly — warn early.
+      - alert: DiskUsageHigh
+        expr: |
+          (pg_database_size_bytes / pg_settings_max_wal_size_bytes) > 0.75
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk usage high on {{ $labels.instance }}"
+          description: >
+            {{ $labels.instance }} is using {{ $value | humanizePercentage }} of allocated storage.
+
+  # ── Lock waits ───────────────────────────────────────────────────────────
+  - name: lock_waits
+    rules:
+
+      # More than 10 queries waiting for locks = something is blocking the system.
+      # Common cause: long-running transaction holding a table lock during migration.
+      - alert: ExcessiveLockWaits
+        expr: pg_locks_count{mode="ExclusiveLock",granted="false"} > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Lock contention on {{ $labels.instance }}"
+          description: >
+            {{ $value }} queries waiting for exclusive locks.
+            Check for long-running transactions: SELECT * FROM pg_stat_activity WHERE wait_event_type = 'Lock';
+
+  # ── Migration job alerts ─────────────────────────────────────────────────
+  - name: migrations
+    rules:
+
+      # A migration running for >10 minutes is almost certainly stuck
+      # (deadlock, waiting on a lock, or the SQL itself is catastrophically slow).
+      - alert: MigrationRunningTooLong
+        expr: dbprovision_migration_duration_seconds > 600
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Migration stuck: {{ $labels.migration_name }}"
+          description: >
+            Migration {{ $labels.migration_name }} has been running for
+            {{ $value | humanizeDuration }} on {{ $labels.tenant_id }}.
+
+  # ── API health ───────────────────────────────────────────────────────────
+  - name: api_health
+    rules:
+
+      - alert: APIHighErrorRate
+        expr: |
+          rate(http_requests_total{status=~"5.."}[5m])
+          /
+          rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DBProvision API error rate >5%"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: ProvisioningQueueBacklog
+        expr: celery_tasks_received_total - celery_tasks_succeeded_total > 50
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Provisioning queue backlog is growing"
+          description: "More than 50 tasks queued and unprocessed. Workers may be down."

@@ -1,0 +1,13 @@
+# Tells Grafana: "scan this folder for .json files and load them as dashboards"
+apiVersion: 1
+
+providers:
+  - name: DBProvision Dashboards
+    orgId: 1
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
