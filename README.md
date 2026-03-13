@@ -1,4 +1,4 @@
-# DBProvision — Multi-Tenant Database Management Platform
+# DBProvision: A Multi-Tenant Database Management Platform
 
 ## What it does
 Internal platform that automates database provisioning for new customers/environments, handles schema migrations, manages backups and provides self-service database management for engineering teams.
@@ -111,25 +111,3 @@ cd infrastructure/terraform
 terraform workspace select tenant-acme-corp-dev
 terraform destroy -auto-approve
 ```
-
-
-## What to capture for README before destroying anything
-
-# Screenshot 1: AWS Console — RDS instances list showing tenant DBs
-open https://console.aws.amazon.com/rds/home#databases:
-
-# Screenshot 2: Grafana fleet overview with real connection data
-open http://localhost:3001/d/dbprovision-fleet
-
-# Screenshot 3: Prometheus targets all green
-open http://localhost:9090/targets
-
-# Screenshot 4: AWS Secrets Manager showing tenant secrets
-open https://console.aws.amazon.com/secretsmanager/listsecrets
-
-# Screenshot 5: Terraform workspace list
-cd infrastructure/terraform
-terraform workspace list
-
-# Screenshot 6: Your terminal UI with real tenant showing ACTIVE status
-open http://localhost:3000
