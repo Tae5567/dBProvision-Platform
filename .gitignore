@@ -6,8 +6,6 @@ __pycache__/
 
 .venv/
 
-README.md
-
 .terraform/
 
 bootstrap/
