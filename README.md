@@ -35,10 +35,6 @@ flowchart TD
 ---
 
 ## Screenshots
-[Grafana dashboard showing real RDS metrics]
-[Terminal UI showing active tenant databases]
-[AWS Console showing provisioned RDS instances]
-
 | User Input | Migrations | Backups |
 |---|---|---|
 | ![](images/sc1.png) | ![](images/migrations.png) | ![](images/backups.png) |
